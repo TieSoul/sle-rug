@@ -1,6 +1,7 @@
 module Eval
 
 import AST;
+import Check;
 import Resolve;
 
 /*
@@ -27,7 +28,16 @@ data Input
 // produce an environment which for each question has a default value
 // (e.g. 0 for int, "" for str etc.)
 VEnv initialEnv(AForm f) {
-  return ();
+	TEnv t = collect(f);
+	VEnv env = ();
+	for (v <- t) {
+		switch (v.\type) {
+			case tint(): env[v.name] = vint(0);
+			case tbool(): env[v.name] = vbool(false);
+			case tstr(): env[v.name] = vstr("");
+		}
+	}
+	return env;
 }
 
 
@@ -40,20 +50,63 @@ VEnv eval(AForm f, Input inp, VEnv venv) {
 }
 
 VEnv evalOnce(AForm f, Input inp, VEnv venv) {
-  return (); 
+  VEnv result = venv;
+  for (q <- f.questions) {
+  	result += eval(q, inp, venv);
+  }; 
+  return result;
 }
 
 VEnv eval(AQuestion q, Input inp, VEnv venv) {
   // evaluate conditions for branching,
   // evaluate inp and computed questions to return updated VEnv
-  return (); 
+  VEnv result = ();
+  if (q has condition) { // conditional block
+  	if (eval(q.condition, venv).b) {
+  		for (qu <- q.ifQuestions) {
+  			result += eval(qu, inp, venv);
+  		}
+  	} else if (q has elseQuestions) {
+  		for (qu <- q.elseQuestions) {
+  			result += eval(qu, inp, venv);
+  		}
+  	}
+  }
+  if (q has questions) { // non-conditional block
+	for (qu <- q.questions) {
+		result += eval(qu, inp, venv);
+	}
+  }
+  if (q has computation) {
+  	result[q.name] = eval(q.computation, venv);
+  }
+  else if (q has name && inp.question == q.name) {
+  	result[q.name] = inp.\value;
+  }
+  return result;
 }
 
 Value eval(AExpr e, VEnv venv) {
   switch (e) {
     case ref(str x): return venv[x];
+    case integer(int n): return vint(n);
+    case string(str s): return vstr(s);
+    case boolean(bool b): return vbool(b);
     
-    // etc.
+    case add(AExpr lhs, AExpr rhs): return vint(eval(lhs, venv).n + eval(rhs, venv).n);
+    case sub(AExpr lhs, AExpr rhs): return vint(eval(lhs, venv).n - eval(rhs, venv).n);
+    case mul(AExpr lhs, AExpr rhs): return vint(eval(lhs, venv).n * eval(rhs, venv).n);
+    case div(AExpr lhs, AExpr rhs): return vint(eval(lhs, venv).n / eval(rhs, venv).n);
+    
+    case gt(AExpr lhs, AExpr rhs): return vbool(eval(lhs, venv).n > eval(rhs, venv).n);
+    case geq(AExpr lhs, AExpr rhs): return vbool(eval(lhs, venv).n >= eval(rhs, venv).n);
+    case lt(AExpr lhs, AExpr rhs): return vbool(eval(lhs, venv).n < eval(rhs, venv).n);
+    case leq(AExpr lhs, AExpr rhs): return vbool(eval(lhs, venv).n <= eval(rhs, venv).n);
+    case eq(AExpr lhs, AExpr rhs): return vbool(eval(lhs, venv) == eval(rhs, venv));
+    case neq(AExpr lhs, AExpr rhs): return vbool(eval(lhs, venv) != eval(rhs, venv));
+    
+    case and(AExpr lhs, AExpr rhs): return vbool(eval(lhs, venv).b && eval(rhs, venv).b);
+    case or(AExpr lhs, AExpr rhs): return vbool(eval(lhs, venv).b || eval(rhs, venv).b);
     
     default: throw "Unsupported expression <e>";
   }

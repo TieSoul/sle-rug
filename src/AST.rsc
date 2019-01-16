@@ -14,7 +14,7 @@ data AForm(loc src = |tmp:///|)
 data AQuestion(loc src = |tmp:///|)
   = question(str text, str name, AType t)
   | computedQuestion(str text, str name, AType t, AExpr computation)
-  | ifThen(AExpr condition, list[AQuestion] questions)
+  | ifThen(AExpr condition, list[AQuestion] ifQuestions)
   | ifThenElse(AExpr condition, list[AQuestion] ifQuestions, list[AQuestion] elseQuestions)
   | block(list[AQuestion] questions)
   ; 
