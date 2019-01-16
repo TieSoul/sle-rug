@@ -66,6 +66,11 @@ set[Message] check(AQuestion q, TEnv tenv, UseDef useDef) {
 			msgs += {error("Computed question has mismatched type: <q.name>", q.src)};
 		}
 	}
+	if (q has condition) {
+		if (typeOf(q.condition, tenv, useDef) != tbool()) {
+			msgs += {error("if statement has non-boolean condition", q.src)};
+		}
+	}
 	return msgs;
 }
 
