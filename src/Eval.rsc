@@ -93,6 +93,8 @@ Value eval(AExpr e, VEnv venv) {
     case string(str s): return vstr(s);
     case boolean(bool b): return vbool(b);
     
+    case not(AExpr expr): return vbool(!eval(expr, venv).b);
+    
     case add(AExpr lhs, AExpr rhs): return vint(eval(lhs, venv).n + eval(rhs, venv).n);
     case sub(AExpr lhs, AExpr rhs): return vint(eval(lhs, venv).n - eval(rhs, venv).n);
     case mul(AExpr lhs, AExpr rhs): return vint(eval(lhs, venv).n * eval(rhs, venv).n);

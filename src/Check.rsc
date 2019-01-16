@@ -84,6 +84,9 @@ set[Message] check(AExpr e, TEnv tenv, UseDef useDef) {
     case ref(str x, src = loc u):
       msgs += { error("Undeclared question: <x>", u) | useDef[u] == {} };
       
+    case not(AExpr expr, src = loc u):
+    	msgs += { error("Operand for unary not is wrongly typed", u) | typeOf(expr, tenv, useDef) != tbool() };
+      
 	case add(AExpr lhs, AExpr rhs, src = loc u):
 		msgs += { error("Arguments for addition are wrongly typed", u) | typeOf(lhs, tenv, useDef) != typeOf(rhs, tenv, useDef) 
 																		|| typeOf(lhs, tenv, useDef) != tint()};
