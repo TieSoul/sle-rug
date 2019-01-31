@@ -5,6 +5,8 @@ import AST;
 
 import ParseTree;
 import String;
+import Node;
+import IO;
 
 /*
  * Implement a mapping from concrete syntax trees (CSTs) to abstract syntax trees (ASTs)
@@ -25,13 +27,15 @@ AForm cst2ast(start[Form] sf) {
 }
 
 list[AQuestion] cst2ast(QuestionBlock qs) {
-	return [cst2ast(q) | /Question q := qs];
+	switch (qs) {
+		case (QuestionBlock)`{ <Question* q> }`: return [cst2ast(q1) | Question q1 <- q];
+	}
 }
 
 AQuestion cst2ast(Question q) {
   switch (q) {
-  	case (Question)`<Str s> <Ident n> : <Type t>`: return question("<s>", "<n>", cst2ast(t), src=q@\loc);
-  	case (Question)`<Str s> <Ident n> : <Type t> = <Expr e>`: return computedQuestion("<s>", "<n>", cst2ast(t), cst2ast(e), src=q@\loc);
+  	case (Question)`<Str s> <Ident n> : <Type t>`: return question("<s>"[1..-1], "<n>", cst2ast(t), src=q@\loc);
+  	case (Question)`<Str s> <Ident n> : <Type t> = <Expr e>`: return computedQuestion("<s>"[1..-1], "<n>", cst2ast(t), cst2ast(e), src=q@\loc);
   	case (Question)`if ( <Expr c> ) <QuestionBlock qs>`: return ifThen(cst2ast(c), cst2ast(qs), src=q@\loc);
   	case (Question)`if ( <Expr c> ) <QuestionBlock iqs> else <QuestionBlock eqs>`: return ifThenElse(cst2ast(c), cst2ast(iqs), cst2ast(eqs), src=q@\loc);
   	case (Question)`<QuestionBlock qs>`: return block(cst2ast(qs), src=q@\loc);
@@ -66,7 +70,7 @@ AExpr cst2ast(Expr e) {
 
 AExpr cst2ast(Literal l) {
 	switch (l) {
-		case (Literal)`<Str s>`: return string("<s>", src=s@\loc);
+		case (Literal)`<Str s>`: return string("<s>"[1..-1], src=s@\loc);
 		case (Literal)`<Int i>`: return integer(toInt("<i>"), src=i@\loc);
 		case (Literal)`<Bool b>`: return boolean(strToBool("<b>"), src=b@\loc);
 		
